@@ -111,8 +111,7 @@ public class Game {
 	private void fight() {
 		renewActions();
 		Scanner in = new Scanner(System.in);
-		fight:
-		while (in.hasNextLine()) {	
+		while (in.hasNext()) {	
 			String[] commands = in.nextLine().split(" ");
 			if (commands[0].equals("move")) {
 				int currentX = Character.getNumericValue(commands[1].charAt(1));
@@ -138,59 +137,56 @@ public class Game {
 				int targetX = Character.getNumericValue(commands[2].charAt(1));
 				int targetY = Character.getNumericValue(commands[2].charAt(3));
 				
-				if (!(battlefield.canAttack(attackerX,attackerY,targetX,targetY))) {
-					continue fight;
-				}
-				
-				this.battlefield.fillVertexList();
-				ArrayList<Creature> startPosition = battlefield.getField()[attackerX][attackerY];
-				
-				//make sure if the units belong to us, not the enemy
-				Boolean isPlayers = isPlayers(startPosition);
-				
-				if (!isPlayers) {
-					continue fight;
-				}
-				
-				// check if it has already attacked
-				if (!moved.contains(attackerX * 10 + attackerY)) {
-				
-					battlefield.getField()[attackerX][attackerY] = null;
-					
+				if (battlefield.canAttack(attackerX,attackerY,targetX,targetY) ) {
+					ArrayList<Creature> startPosition = battlefield.getField()[attackerX][attackerY];
 					ArrayList<Creature> targetPosition = battlefield.getField()[targetX][targetY];
-					battlefield.getField()[targetX][targetY] = null;
 					
-					battlefield.addAdjacent(battlefield.getVertexList());
-					PathFinder.computePaths( battlefield.getVertex(attackerX , attackerY) ,
-							battlefield.getVertexList());
-					List<Vertex> path = PathFinder.getShortestPathTo( battlefield.getVertex(targetX, targetY) );
-					battlefield.getField()[attackerX][attackerY] = startPosition;
-					battlefield.getField()[targetX][targetY] = targetPosition;
-					
-					int distance = path.size() - 1;
-					int range = startPosition.get(0).getRange();
-					if ( distance > range ) {
-						System.out.println("Out of range!");
-					} else {
-						for (Creature c : battlefield.getField()[attackerX][attackerY]) {
-							if (battlefield.getField()[targetX][targetY] != null) {
-								c.attack(battlefield.getField()[targetX][targetY]);
+					if (isPlayers(startPosition) && !isPlayers(targetPosition)) {
+						this.battlefield.fillVertexList();
+						
+						// check if it has already attacked
+						if (!moved.contains(attackerX * 10 + attackerY)) {
+						
+							battlefield.getField()[attackerX][attackerY] = null;
+							
+
+							battlefield.getField()[targetX][targetY] = null;
+							
+							battlefield.addAdjacent(battlefield.getVertexList());
+							PathFinder.computePaths( battlefield.getVertex(attackerX , attackerY) ,
+									battlefield.getVertexList());
+							List<Vertex> path = PathFinder.getShortestPathTo( battlefield.getVertex(targetX, targetY) );
+							battlefield.getField()[attackerX][attackerY] = startPosition;
+							battlefield.getField()[targetX][targetY] = targetPosition;
+							
+							int distance = path.size() - 1;
+							int range = startPosition.get(0).getRange();
+							if ( distance > range ) {
+								System.out.println("Out of range!");
+							} else {
+								for (Creature c : battlefield.getField()[attackerX][attackerY]) {
+									if (battlefield.getField()[targetX][targetY] != null) {
+										c.attack(battlefield.getField()[targetX][targetY]);
+									}
+								}
+								moved.add(attackerX * 10 + attackerY);
+								System.out.println("Attack successful.");
+								//check if game is won
+								if (enemy.getArmy()[0].size() == 0 &&
+									enemy.getArmy()[1].size() == 0 &&
+									enemy.getArmy()[2].size() == 0 &&
+									enemy.getArmy()[3].size() == 0 ) {
+									winGame();
+								}
+								
+								removeAction(attackerX, attackerY);
 							}
 						}
-						moved.add(attackerX * 10 + attackerY);
-						System.out.println("Attack successful.");
-						//check if game is won
-						if (enemy.getArmy()[0].size() == 0 &&
-							enemy.getArmy()[1].size() == 0 &&
-							enemy.getArmy()[2].size() == 0 &&
-							enemy.getArmy()[3].size() == 0 ) {
-							winGame();
-						}
-						
-						removeAction(attackerX, attackerY);
+						in = new Scanner(System.in);
 					}
 				}
-				in = new Scanner(System.in);
+				
+				
 			} else if (commands[0].equals("print")) {
 				for (int i = 0; i < 10; i++) {
 					for (int j = 0; j < 10; j++) {
@@ -330,10 +326,12 @@ public class Game {
 				int tryX, tryY;
 				tryX = (int)( Math.random() * 10 );
 				tryY = (int)( Math.random() * 10 );
-				battlefield.move(x, y, tryX, tryY);
-				if (battlefield.getField()[x][y] == null) {
-					hasAMove = false;
-					moved.add(10*tryX + tryY);
+				if (battlefield.canMove(x, y, tryX, tryY)) {
+					battlefield.move(x, y, tryX, tryY);
+					if (battlefield.getField()[x][y] == null) {
+						hasAMove = false;
+						moved.add(10*tryX + tryY);
+					}
 				}
 			}
 		}
