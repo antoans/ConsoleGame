@@ -4,7 +4,7 @@ public class Footman extends Creature {
 
 	
 	public Footman() {
-		super(3, 2, 4, 0, 4, 0, 1);
+		super(15, 8, 20, 0, 4, 0, 1);
 	}
 
 }
