@@ -10,13 +10,12 @@ import java.util.List;
 public class Battlefield {
 
 	private ArrayList<Creature>[][] field;
-	private boolean[][] enemy;
+	//private boolean[][] enemy;
 	private List<Vertex> vertexList;
 	
 	@SuppressWarnings("unchecked")
 	Battlefield() {
 		this.field = new ArrayList[10][10];
-		this.enemy = new boolean[10][10];
 		fillVertexList();
 	}
 
@@ -35,9 +34,6 @@ public class Battlefield {
 
 	public void move(int currentX, int currentY, int futureX, int futureY) {
 		fillVertexList();
-		if ( ! (canMove(currentX,currentY,futureX,futureY))) {
-			return;
-		}
 		
 		ArrayList<Creature> startPosition = field[currentX][currentY];
 		field[currentX][currentY] = null;
@@ -46,8 +42,7 @@ public class Battlefield {
 		PathFinder.computePaths( getVertex(currentX , currentY) , this.vertexList);
 		List<Vertex> path = PathFinder.getShortestPathTo( getVertex(futureX, futureY) );
 		
-		if (startPosition.get(0).getStamina() < path.size()) {
-			System.out.println("Your soldiers can't go that far!");
+		if (startPosition.get(0).getStamina() + 1 < path.size()) {
 			field[currentX][currentY] = startPosition;
 			return;
 		}
@@ -56,7 +51,7 @@ public class Battlefield {
 		System.out.println(path);
 	}
 
-	private boolean canMove(int currentX, int currentY, int futureX, int futureY) {
+	public boolean canMove(int currentX, int currentY, int futureX, int futureY) {
 		if (currentX < 0 || currentX > 9 ||
 				currentY < 0 || currentY > 9 ||
 				futureX < 0 || futureX > 9 ||
@@ -93,43 +88,53 @@ public class Battlefield {
 		}
 	}
 	
-	public void printBattlefield() {
+	public void printBattlefield(boolean[][] enemy) {
 		PrintWriter writer;
 		try {
 			writer = new PrintWriter("battlefield.txt", "UTF-8");
 			for (int i = 0; i < 10; i++) {
-				writer.print("|| ");
+				writer.print("|" + i + " |");
 				for (int j = 0; j < 10; j++) {
 					if (this.field[i][j] == null || this.field[i][j].size() == 0) {
-						writer.print("    || ");
+						writer.print("    |");
 					} else if (this.field[i][j].get(0).getClass() == (new Peasant()).getClass()) {
-						if (this.enemy[i][j]) {
-							writer.print("EP" + this.field[i][j].size() + "|| ");
+						if (enemy[i][j]) {
+							writer.print("EP" + this.field[i][j].size() + 
+									(this.field[i][j].size() < 10 ? " |" : "|"));
 						} else {
-							writer.print(" P" + this.field[i][j].size() + "|| ");
+							writer.print(" P" + this.field[i][j].size() + 
+									(this.field[i][j].size() < 10 ? " |" : "|"));
 						}
 					} else if (this.field[i][j].get(0).getClass() == (new Archer()).getClass()) {
-						if (this.enemy[i][j]) {
-							writer.print("EA" + this.field[i][j].size() + "|| ");
+						if (enemy[i][j]) {
+							writer.print("EA" + this.field[i][j].size() + 
+									(this.field[i][j].size() < 10 ? " |" : "|"));
 						} else {
-							writer.print(" A" + this.field[i][j].size() + "|| ");
+							writer.print(" A" + this.field[i][j].size() + 
+									(this.field[i][j].size() < 10 ? " |" : "|"));
 						}
 					} else if (this.field[i][j].get(0).getClass() == (new Footman()).getClass()) {
-						if (this.enemy[i][j]) {
-							writer.print("EF" + this.field[i][j].size() + "|| ");
+						if (enemy[i][j]) {
+							writer.print("EF" + this.field[i][j].size() + 
+									(this.field[i][j].size() < 10 ? " |" : "|"));
 						} else {
-							writer.print(" F" + this.field[i][j].size() + "|| ");
+							writer.print(" F" + this.field[i][j].size() + 
+									(this.field[i][j].size() < 10 ? " |" : "|"));
 						}
 					} else if (this.field[i][j].get(0).getClass() == (new Griffon()).getClass()) {
-						if (this.enemy[i][j]) {
-							writer.print("EG" + this.field[i][j].size() + "|| ");
+						if (enemy[i][j]) {
+							writer.print("EG" + this.field[i][j].size() + 
+									(this.field[i][j].size() < 10 ? " |" : "|"));
 						} else {
-							writer.print(" G" + this.field[i][j].size() + "|| ");
+							writer.print(" G" + this.field[i][j].size() + 
+									(this.field[i][j].size() < 10 ? " |" : "|"));
 						}
 					}
 				}
 				writer.println();
+				writer.println("------------------------------------------------------");
 			}
+			writer.println("   | 0  | 1  | 2  | 3  | 4  | 5  | 6  | 7  | 8  | 9  |");
 			writer.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
@@ -149,9 +154,21 @@ public class Battlefield {
 		}		
 	}
 	
-	public void canAttack() {
-		// TODO Auto-generated method stub
-		
+	public Boolean canAttack(int currentX, int currentY, int futureX, int futureY) {
+		if (currentX < 0 || currentX > 9 ||
+				currentY < 0 || currentY > 9 ||
+				futureX < 0 || futureX > 9 ||
+				futureY < 0 || futureY > 9 ) {
+			System.out.println("Invalid command! Positions are indexed from 0 to 9.");
+			return false;
+		} else if (field[currentX][currentY] == null) {
+			System.out.println("Invalid command! You have no units there.");
+			return false;
+		} else if (field[futureX][futureY] == null) {
+			System.out.println("Invalid command! There is nobody to attack.");
+			return false;
+		}
+		return true;
 	}
 
 	public Vertex getVertex(int x, int y) {
@@ -166,11 +183,4 @@ public class Battlefield {
 		return field;
 	}
 	
-	public void setEnemy(int x, int y, boolean isEnemy) {
-		this.enemy[x][y] = isEnemy;
-	}
-	
-	public boolean isEnemy(int x, int y) {
-		return this.enemy[x][y];
-	}
 }
